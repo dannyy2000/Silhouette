@@ -1,0 +1,9 @@
+target/
+.snfoundry_cache/
+.snfoundry/
+Scarb.lock
+.env
+.env.local
+*.log
+.DS_Store
+MEMORY.md
