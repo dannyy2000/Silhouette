@@ -12,6 +12,6 @@ sierra = true
 casm = false
 
 [dev-dependencies]
-snforge_std = ">=0.31.0"
+snforge_std = "0.53.0"
 
 [tool.snforge]

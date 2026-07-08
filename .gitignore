@@ -7,3 +7,4 @@ Scarb.lock
 *.log
 .DS_Store
 MEMORY.md
+.claude/

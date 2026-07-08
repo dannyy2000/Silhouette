@@ -7,8 +7,8 @@
 
 [![Cairo](https://img.shields.io/badge/Cairo-2.x-orange)](https://www.cairo-lang.org/)
 [![Target](https://img.shields.io/badge/target-Starknet-blue)](https://www.starknet.io/)
-[![Status](https://img.shields.io/badge/status-unverified%20skeleton-red)](#status)
-[![Tests](https://img.shields.io/badge/tests-0%20written-red)](#testing)
+[![Status](https://img.shields.io/badge/status-compiling%2C%20tested-yellow)](#status)
+[![Tests](https://img.shields.io/badge/tests-14%20passing-brightgreen)](#testing)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 ---
@@ -33,9 +33,11 @@ position size and side are visible only to the two people in the trade.
 **This is a design document with a Cairo skeleton attached, not a working
 protocol yet.** Concretely, as of this commit:
 
-- The Cairo in `src/` has not been run through `scarb build`. There is no
-  confirmation it compiles.
-- `tests/` is empty. Zero tests exist.
+- `scarb build` passes and `snforge test` runs 14 passing tests covering
+  the full offer/accept/settle/close lifecycle, cancellation, double-
+  settlement rejection, missing-oracle-rate handling, and liquidation.
+  That verifies the swap logic is internally consistent — it does not
+  mean this has been deployed, audited, or used with real value.
 - `swap_core.cairo` moves collateral through a fully public mock token
   (`mock_collateral_token.cairo`) — no privacy is wired in yet. STRK20
   SDK access has not been requested.
@@ -652,28 +654,28 @@ the maintenance margin rule, and settles each epoch based on oracle data.
 
 ## Development Setup
 
-**Not yet verified end-to-end** — this is the intended flow once tooling
-is confirmed installed and actually run against this repo.
+Verified end-to-end against this repo — `scarb build` and `snforge test`
+both run clean with the versions below.
 
 ### Prerequisites
 
 | Tool | Version |
 |---|---|
-| [Scarb](https://docs.swmansion.com/scarb/) | ≥ 2.8.0 (per `Scarb.toml`) |
-| [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry/) (`snforge`, `sncast`) | ≥ 0.31.0 |
+| [Scarb](https://docs.swmansion.com/scarb/) | ≥ 2.8.0 (tested against 2.14.0) |
+| [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry/) (`snforge`, `sncast`) | 0.53.0 — pinned exactly in `Scarb.toml`'s `snforge_std` dependency. Scarb will otherwise resolve the latest `snforge_std` (e.g. 0.62.x), which uses cheatcodes the 0.53.0 `snforge` binary doesn't support, and every test fails at runtime with `Function 'set_next_syscall_from_cheatcode' is not supported`. If you install a newer Starknet Foundry, bump the pin in `Scarb.toml` to match. |
 
 ### Clone and build
 
 ```bash
-git clone https://github.com/dannyy2000/silhouette.git
-cd silhouette
+git clone git@github.com:dannyy2000/Silhouette.git
+cd Silhouette
 scarb build
 ```
 
-Expected output (not yet confirmed):
+Expected output:
 ```
 Compiling silhouette v0.1.0
-Finished release target(s)
+Finished `dev` profile target(s)
 ```
 
 ### Run tests
@@ -682,28 +684,32 @@ Finished release target(s)
 snforge test
 ```
 
-There are currently no tests to run — `tests/` is empty. See
-[Testing](#testing) and [Known Gaps](#known-gaps).
+Expected output:
+```
+Collected 14 test(s) from silhouette package
+Tests: 14 passed, 0 failed, 0 ignored, 0 filtered out
+```
 
 ---
 
 ## Testing
 
-**Current state: zero tests.** This section documents the planned
-coverage, not results that exist yet.
+**Current state: 14 passing tests, 0 failing.** Run with `snforge test`.
 
-| Planned test | Target file | What it should verify |
+| Test | File | What it verifies |
 |---|---|---|
-| Full lifecycle | `swap_core_test.cairo` | `post_offer` → `accept_offer` → oracle submit → `settle_epoch` → `close_swap`, with correct collateral movements at each step |
+| Full lifecycle | `swap_core_test.cairo` | `post_offer` → `accept_offer` → oracle submit → `settle_epoch` (both directions) → `close_swap`, with correct collateral movements and final balances at each step |
 | Cancel offer | `swap_core_test.cairo` | Fixed party cancels unaccepted offer, full collateral returned |
 | Double settlement rejection | `swap_core_test.cairo` | Settling the same epoch twice fails with `'epoch already settled'` |
 | Oracle rate not found | `swap_core_test.cairo` | Settling before the oracle submits a rate panics with `"oracle rate not found"` |
-| Liquidation path | `swap_core_test.cairo` | Variable collateral dropping below 110% margin force-closes the swap correctly |
-| Collateral token behaviour | `mock_collateral_token_test.cairo` | Transfer, mint, balance checks, insufficient-balance rejection |
-| Oracle submission | `staking_rate_oracle_test.cairo` | Rate calculation correctness, duplicate-epoch rejection, owner-only enforcement |
+| Liquidation path | `swap_core_test.cairo` | Variable collateral unable to cover the fixed party's payout force-liquidates and zeroes both balances |
+| Mint, transfer, balance | `mock_collateral_token_test.cairo` | Minting, direct transfer, insufficient-balance rejection |
+| Allowance-based transfer_from | `mock_collateral_token_test.cairo` | `approve` then `transfer_from` moves funds and decrements the allowance; missing allowance is rejected |
+| Oracle submission | `staking_rate_oracle_test.cairo` | Rate calculation correctness, duplicate-epoch rejection, owner-only enforcement, zero-stake rejection |
 
-Silhouette should not be described as a POC until this table is a
-results table instead of a plan.
+This covers the swap logic and the collateral token's own correctness.
+It does not cover deployment, STRK20 integration, or anything
+involving real value — see [Known Gaps](#known-gaps).
 
 ---
 
@@ -786,7 +792,6 @@ deployed code, because nothing is deployed.
 Consolidated list — the least flattering section in this document,
 deliberately, because everything above reads more finished than the code is:
 
-- **Zero tests.**
 - **STRK20 SDK access is gated and has not been requested.** Public
   reporting describes integration partners working directly with the
   STRK20 team — there is no confirmation of a timeline for this project
@@ -806,7 +811,8 @@ deliberately, because everything above reads more finished than the code is:
 
 - ~~Get `swap_core.cairo`, `staking_rate_oracle.cairo`, and
   `mock_collateral_token.cairo` compiling~~ — done, `scarb build` passes.
-- Pass a first test suite covering the full lifecycle and the failure paths.
+- ~~Pass a first test suite covering the full lifecycle and the failure
+  paths.~~ — done, 14 passing tests, see [Testing](#testing).
 - ~~Resolve the `accept_offer` epoch-start stub against a real epoch
   source.~~ — done, uses `staking_rate_oracle.get_latest_epoch() + 1`.
 - Public GitHub repo, this README kept in sync with actual code state.
