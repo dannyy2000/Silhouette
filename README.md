@@ -7,7 +7,7 @@
 
 [![Cairo](https://img.shields.io/badge/Cairo-2.x-orange)](https://www.cairo-lang.org/)
 [![Target](https://img.shields.io/badge/target-Starknet-blue)](https://www.starknet.io/)
-[![Status](https://img.shields.io/badge/status-compiling%2C%20tested-yellow)](#status)
+[![Status](https://img.shields.io/badge/status-deployed%20to%20Sepolia-yellow)](#status)
 [![Tests](https://img.shields.io/badge/tests-14%20passing-brightgreen)](#testing)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
@@ -30,17 +30,22 @@ position size and side are visible only to the two people in the trade.
 
 ## Status
 
-**This is a design document with a Cairo skeleton attached, not a working
-protocol yet.** Concretely, as of this commit:
+**This is a working, tested, and deployed skeleton — not an audited or
+production-ready protocol.** Concretely, as of this commit:
 
 - `scarb build` passes and `snforge test` runs 14 passing tests covering
   the full offer/accept/settle/close lifecycle, cancellation, double-
   settlement rejection, missing-oracle-rate handling, and liquidation.
-  That verifies the swap logic is internally consistent — it does not
-  mean this has been deployed, audited, or used with real value.
+- All three contracts are declared and deployed on Starknet Sepolia
+  testnet — see [Deployment](#deployment) for addresses. No swaps have
+  been posted against this deployment; it proves the contracts declare,
+  deploy, and wire together correctly on a live network, not a market
+  with real activity.
 - `swap_core.cairo` moves collateral through a fully public mock token
   (`mock_collateral_token.cairo`) — no privacy is wired in yet. STRK20
   SDK access has not been requested.
+- No audit, no static analysis, no fuzzing. Not deployed to mainnet, and
+  should not be until an audit happens.
 
 Every claim below about what the protocol *will* do is a design claim
 about intended behavior, not implemented or verified functionality.
@@ -715,17 +720,38 @@ involving real value — see [Known Gaps](#known-gaps).
 
 ## Deployment
 
-**Not attempted yet.** Documented here as the intended path.
+### Testnet — live on Starknet Sepolia
 
-### Testnet
+All three contracts are declared and deployed, in dependency order:
+
+| Contract | Address |
+|---|---|
+| `MockCollateralToken` | [`0x016e27eb35d9faf774600b3cedf2236743fea410c876a4a57d7cbc371c61a245`](https://sepolia.starkscan.co/contract/0x016e27eb35d9faf774600b3cedf2236743fea410c876a4a57d7cbc371c61a245) |
+| `StakingRateOracle` | [`0x043afc7db2618c4e5a7c886951c1e018bcd72324eb352f360c7bc174af400976`](https://sepolia.starkscan.co/contract/0x043afc7db2618c4e5a7c886951c1e018bcd72324eb352f360c7bc174af400976) |
+| `SwapCore` | [`0x04c85632a40e68f9383892cc75673e4a2a6de9a09367d4a776d45fcd6600fe49`](https://sepolia.starkscan.co/contract/0x04c85632a40e68f9383892cc75673e4a2a6de9a09367d4a776d45fcd6600fe49) |
+
+`StakingRateOracle`'s owner is the deploying account — verified by
+calling `get_owner()` against the address above, which returns the
+deployer's address. No swaps have been posted against this deployment
+yet; it exists to prove the contracts declare, deploy, and wire together
+correctly on a live network, not as a market with real activity.
+
+To redeploy from scratch:
 
 ```bash
-sncast declare --contract-name SwapCore
-sncast deploy --class-hash <hash> --constructor-calldata <collateral_token_addr> <rate_oracle_addr>
+sncast --account <your-account> -w declare --network sepolia --contract-name MockCollateralToken
+sncast --account <your-account> -w deploy --network sepolia --class-hash <mock_token_class_hash>
+
+sncast --account <your-account> -w declare --network sepolia --contract-name StakingRateOracle
+sncast --account <your-account> -w deploy --network sepolia --class-hash <oracle_class_hash> --arguments '<owner_address>'
+
+sncast --account <your-account> -w declare --network sepolia --contract-name SwapCore
+sncast --account <your-account> -w deploy --network sepolia --class-hash <swap_core_class_hash> --arguments '<mock_token_address>, <oracle_address>'
 ```
 
 Deploy in dependency order: `mock_collateral_token` → `staking_rate_oracle`
-→ `swap_core`.
+→ `swap_core`, since `swap_core`'s constructor takes the other two
+addresses.
 
 ### Mainnet path
 
@@ -815,7 +841,10 @@ deliberately, because everything above reads more finished than the code is:
   paths.~~ — done, 14 passing tests, see [Testing](#testing).
 - ~~Resolve the `accept_offer` epoch-start stub against a real epoch
   source.~~ — done, uses `staking_rate_oracle.get_latest_epoch() + 1`.
-- Public GitHub repo, this README kept in sync with actual code state.
+- ~~Public GitHub repo~~ — done, this README kept in sync with actual
+  code state.
+- ~~Deploy to testnet~~ — done, live on Starknet Sepolia, see
+  [Deployment](#deployment).
 
 ### Phase 2 — Trustless oracle
 
