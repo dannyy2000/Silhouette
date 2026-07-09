@@ -65,6 +65,7 @@ Nothing below should be read as "already working on Starknet."
 - [What's Visible to Whom, at Each Step](#whats-visible-to-whom-at-each-step)
 - [Contract Architecture](#contract-architecture)
 - [Contract Reference](#contract-reference)
+- [Frontend](#frontend)
 - [Development Setup](#development-setup)
 - [Testing](#testing)
 - [Deployment](#deployment)
@@ -717,6 +718,17 @@ Tests: 14 passed, 0 failed, 0 ignored, 0 filtered out
 This covers the swap logic and the collateral token's own correctness.
 It does not cover deployment, STRK20 integration, or anything
 involving real value — see [Known Gaps](#known-gaps).
+
+---
+
+## Frontend
+
+A Next.js app in [`frontend/`](frontend/) talks directly to the deployed
+contracts — no backend, no indexer. Landing page, a market view (reads
+every open offer straight from `swap_core`), a create-offer form, and a
+dashboard for your own positions, all wired to real wallet transactions
+(Argent X / Braavos) against the Sepolia addresses below. See
+[`frontend/README.md`](frontend/README.md) to run it.
 
 ---
 
