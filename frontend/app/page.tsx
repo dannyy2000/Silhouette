@@ -327,25 +327,137 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Privacy note */}
-      <section className="border-b border-border">
-        <div className="max-w-5xl mx-auto px-6 py-16">
-          <h2 className="text-2xl font-medium text-fg mb-4">
-            Nobody else sees it — eventually
-          </h2>
-          <p className="text-fg-dim text-sm leading-relaxed max-w-2xl mb-4">
-            Today, collateral moves through a fully public mock token —
-            this deployment is a swap-logic proof, not a privacy proof.
-            Once STRK20 SDK access lands, collateral shifts to a shielded
-            balance behind the same interface, with zero changes to the
-            settlement logic: position size and side become visible only
-            to the two counterparties, not the whole market watching the
-            chain.
-          </p>
-          <p className="text-fg-faint text-xs max-w-2xl">
-            Full two-tier breakdown (what&apos;s buildable now vs. the
-            research direction) is in the repo README.
-          </p>
+      {/* Privacy layer — STRK20 / SNIP-36 */}
+      <section className="border-b border-border bg-bg-raised">
+        <div className="max-w-5xl mx-auto px-6 py-20">
+          <div className="max-w-2xl mb-14">
+            <span className="inline-flex items-center gap-2 text-xs text-accent border border-accent/30 bg-accent/10 px-3 py-1.5 rounded-full mb-6 uppercase tracking-wider">
+              Built for Proof of Privacy
+            </span>
+            <h2 className="text-2xl font-medium text-fg mb-4">
+              Hedging is a strategic disclosure. STRK20 is why this can stay private.
+            </h2>
+            <p className="text-fg-dim text-sm leading-relaxed">
+              The moment you post or accept a fixed-rate offer, you&apos;ve
+              told the market your position size and your view on where
+              rates are headed. Every existing rate-hedging product does
+              this completely in the open. Starknet&apos;s STRK20 is the
+              first token-privacy primitive on any chain that lets this
+              kind of swap hide that information instead of broadcasting
+              it.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 mb-14">
+            <div className="bg-bg rounded-lg border border-border p-6">
+              <p className="text-xs text-fg-faint uppercase tracking-widest mb-3">
+                The underlying primitive
+              </p>
+              <h3 className="text-fg mb-2">SNIP-36</h3>
+              <p className="text-sm text-fg-dim leading-relaxed">
+                Shipped in Starknet v0.14.2, live on mainnet. Lets a
+                transaction attach an off-chain-generated STARK proof that
+                the network verifies natively, without a contract
+                verifying it itself. General-purpose — not specific to
+                token privacy, and not owned by any single application.
+              </p>
+            </div>
+            <div className="bg-bg rounded-lg border border-border p-6">
+              <p className="text-xs text-fg-faint uppercase tracking-widest mb-3">
+                The reference application
+              </p>
+              <h3 className="text-fg mb-2">STRK20</h3>
+              <p className="text-sm text-fg-dim leading-relaxed">
+                Built on top of SNIP-36, scoped to ERC-20 tokens: shield a
+                balance, transfer privately, swap through existing public
+                liquidity by briefly unshielding. Optional viewing keys
+                let one designated auditor decrypt a single user&apos;s
+                history for compliance — without exposing it to the
+                counterparty or the public.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 mb-14">
+            <div className="rounded-lg border border-positive/30 bg-positive/[0.05] p-8">
+              <div className="inline-block bg-positive/15 border border-positive/30 text-positive text-xs uppercase tracking-widest px-3 py-1 rounded-full mb-5">
+                Tier 1 — buildable today
+              </div>
+              <p className="text-sm text-fg-dim leading-relaxed mb-4">
+                Collateral sits in an STRK20 shielded balance the entire
+                time nobody&apos;s actively trading — holdings are private
+                between settlements. At settlement, the contract briefly
+                unshields the two amounts just long enough to run the rate
+                math, pays out the difference, then reshields the result.
+              </p>
+              <p className="text-sm text-fg-dim leading-relaxed">
+                Same tradeoff STRK20&apos;s own swap feature already
+                accepts — not a weaker standard invented for this project.
+                This is the realistic scope for an 8-week accelerator
+                timeline: swap the token implementation behind{" "}
+                <code className="text-fg-dim">i_collateral_token.cairo</code>,
+                once STRK20 SDK access is granted.
+              </p>
+            </div>
+            <div className="rounded-lg border border-border-strong bg-bg p-8">
+              <div className="inline-block bg-bg-raised-2 border border-border-strong text-fg-dim text-xs uppercase tracking-widest px-3 py-1 rounded-full mb-5">
+                Tier 2 — research direction
+              </div>
+              <p className="text-sm text-fg-dim leading-relaxed mb-4">
+                Because SNIP-36 is general-purpose, it&apos;s possible in
+                principle to write a custom Cairo circuit proving{" "}
+                <code className="text-fg-dim">payout = hidden_notional × public_rate</code>{" "}
+                is correct without the notional ever appearing anywhere,
+                even momentarily — closer to what Aztec does with private
+                smart contracts than to calling the STRK20 SDK.
+              </p>
+              <p className="text-sm text-fg-dim leading-relaxed">
+                Nobody has built this. There&apos;s no public precedent
+                for it on Starknet for a multi-party financial contract
+                like a swap. The honest target for this program is a
+                design/spec for this phase, not a shipped circuit.
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs text-fg-faint uppercase tracking-widest mb-4">
+              What&apos;s visible to whom, at each step
+            </p>
+            <div className="overflow-x-auto rounded-lg border border-border">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-bg border-b border-border">
+                    <th className="text-left px-4 py-3 text-xs text-fg-faint uppercase tracking-wider">Step</th>
+                    <th className="text-left px-4 py-3 text-xs text-fg-faint uppercase tracking-wider">Today (mock token)</th>
+                    <th className="text-left px-4 py-3 text-xs text-fg-faint uppercase tracking-wider">Tier 1</th>
+                    <th className="text-left px-4 py-3 text-xs text-fg-faint uppercase tracking-wider">Tier 2</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {[
+                    ["Offer posted", "Notional, rate, party — all public", "Only that an offer was posted; amount/party shielded", "Same as Tier 1"],
+                    ["Offer accepted", "Both parties, both collateral amounts — public", "Only that a swap was created; amounts/parties shielded", "Same as Tier 1"],
+                    ["Epoch settlement", "Full payment breakdown emitted publicly", "Computed in the clear momentarily, then reshielded", "Never appears in the clear"],
+                    ["Compliance", "None", "Optional viewing key to a designated auditor", "Optional viewing key to a designated auditor"],
+                  ].map((row) => (
+                    <tr key={row[0]} className="bg-bg-raised">
+                      <td className="px-4 py-3.5 text-fg">{row[0]}</td>
+                      <td className="px-4 py-3.5 text-fg-faint">{row[1]}</td>
+                      <td className="px-4 py-3.5 text-positive">{row[2]}</td>
+                      <td className="px-4 py-3.5 text-accent">{row[3]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-fg-faint text-xs mt-4 max-w-2xl">
+              This deployment implements the swap logic completely but
+              moves collateral through a fully public mock token — it is
+              the shared skeleton both tiers get built on, and is itself
+              neither tier yet. Full breakdown in the repo README.
+            </p>
+          </div>
         </div>
       </section>
 
