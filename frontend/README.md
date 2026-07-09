@@ -33,7 +33,8 @@ README).
 ## Configuration
 
 Contract addresses default to the deployed Sepolia addresses in
-`lib/contracts.ts`. Override via `.env.local` if you redeploy:
+`lib/contracts.ts`. Override via `.env.local` (see `.env.example`) if
+you redeploy:
 
 ```
 NEXT_PUBLIC_COLLATERAL_TOKEN_ADDRESS=0x...
@@ -41,6 +42,27 @@ NEXT_PUBLIC_RATE_ORACLE_ADDRESS=0x...
 NEXT_PUBLIC_SWAP_CORE_ADDRESS=0x...
 ```
 
+All three are optional — the app works with no `.env.local` at all
+against the addresses already live on Sepolia.
+
 ABIs in `lib/abi/` are generated from the compiled contracts
 (`target/dev/*.contract_class.json` in the repo root after `scarb
 build`) — regenerate them if the contracts change.
+
+## Deploy to Vercel
+
+The one thing that isn't zero-config: this Next.js app lives in
+`frontend/`, not the repo root, so Vercel needs to be told where to
+look.
+
+1. [vercel.com/new](https://vercel.com/new) → import
+   `dannyy2000/Silhouette`.
+2. Under **Root Directory**, click Edit and select `frontend`. This is
+   the only non-default setting required — Vercel auto-detects
+   Next.js and handles the build/output config from there.
+3. Environment variables: none required. Only add the three
+   `NEXT_PUBLIC_*` addresses above (in the Vercel project's
+   Environment Variables settings) if you've redeployed the contracts
+   yourself and want to point at different addresses.
+4. Deploy. No secrets, no backend, no database — it's a static Next.js
+   app that talks directly to Starknet Sepolia from the browser.
