@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAccount } from "@starknet-react/core";
 import { CairoOption } from "starknet";
 import { useContracts } from "@/lib/hooks";
-import { formatUnits, OFFER_STATUS, SWAP_STATUS } from "@/lib/format";
+import { formatUnits, OFFER_STATUS, SWAP_STATUS, shortenAddress } from "@/lib/format";
 
 interface OfferRow {
   id: number;
@@ -26,6 +26,29 @@ interface SwapRow {
   fixedCollateral: bigint;
   variableCollateral: bigint;
   status: number;
+}
+
+function Badge({ text, tone }: { text: string; tone: "accent" | "positive" | "neutral" }) {
+  const cls = {
+    accent: "bg-accent/10 text-accent border-accent/30",
+    positive: "bg-positive/10 text-positive border-positive/30",
+    neutral: "bg-bg-raised-2 text-fg-faint border-border",
+  }[tone];
+  return (
+    <span className={`text-xs border px-2 py-0.5 rounded ${cls}`}>{text}</span>
+  );
+}
+
+function ConnectPrompt() {
+  return (
+    <div className="border border-border rounded-lg p-10 text-center max-w-sm mx-auto mt-16">
+      <h2 className="text-base text-fg mb-2">Connect your wallet</h2>
+      <p className="text-sm text-fg-dim">
+        Connect with Argent X or Braavos, using the button in the top
+        right, to view your active positions and open offers.
+      </p>
+    </div>
+  );
 }
 
 export default function DashboardPage() {
@@ -150,7 +173,9 @@ export default function DashboardPage() {
       await load();
     } catch (e) {
       console.error(e);
-      setError("Settlement failed — the oracle may not have posted this epoch's rate yet.");
+      setError(
+        "Settlement failed — the oracle may not have posted this epoch's rate yet.",
+      );
     } finally {
       setBusyAction(null);
     }
@@ -175,131 +200,201 @@ export default function DashboardPage() {
 
   if (accountStatus !== "connected") {
     return (
-      <div className="max-w-lg mx-auto px-6 py-24 text-center">
-        <h1 className="text-xl text-fg mb-3">Connect a wallet to see your positions</h1>
-        <p className="text-fg-dim text-sm">
-          Your dashboard reads directly from the contract, filtered to
-          offers and swaps where you&apos;re a party.
+      <div className="max-w-5xl mx-auto px-6 py-12">
+        <h1 className="text-3xl font-medium text-fg mb-2">Dashboard</h1>
+        <p className="text-sm text-fg-dim mb-6">
+          Your active swaps, open offers, and their live status.
         </p>
+        <ConnectPrompt />
       </div>
     );
   }
 
+  const activeSwaps = mySwaps.filter((s) => s.status === 0).length;
+  const openOffers = myOffers.filter((o) => o.status === 0).length;
+
   return (
-    <div className="max-w-5xl mx-auto px-6 py-16">
-      <h1 className="text-2xl font-medium text-fg mb-2">Dashboard</h1>
-      <p className="text-fg-dim text-sm mb-10">
-        Positions where {address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "you"} is a party.
-      </p>
+    <div className="max-w-5xl mx-auto px-6 py-12 space-y-14">
+      <div>
+        <h1 className="text-3xl font-medium text-fg mb-1">Dashboard</h1>
+        <p className="text-sm text-fg-faint font-mono">
+          {address && shortenAddress(address, 6)}
+        </p>
+      </div>
 
       {error && (
-        <div className="mb-6 text-sm text-negative border border-negative/30 rounded p-3">
+        <div className="text-sm text-negative border border-negative/30 rounded p-3">
           {error}
         </div>
       )}
 
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div className="border border-border rounded-lg p-5">
+          <p className="text-xs text-fg-faint uppercase tracking-widest mb-1">
+            Active swaps
+          </p>
+          <p className="text-3xl text-fg">{activeSwaps}</p>
+        </div>
+        <div className="border border-border rounded-lg p-5">
+          <p className="text-xs text-fg-faint uppercase tracking-widest mb-1">
+            Open offers
+          </p>
+          <p className="text-3xl text-fg">{openOffers}</p>
+        </div>
+      </div>
+
       {loading && <p className="text-fg-faint text-sm">Loading…</p>}
 
-      <section className="mb-12">
-        <h2 className="text-sm text-fg-faint uppercase tracking-wide mb-4">
-          Your offers ({myOffers.length})
-        </h2>
-        {myOffers.length === 0 && !loading && (
-          <p className="text-fg-faint text-sm">No offers posted from this wallet yet.</p>
+      <section>
+        <h2 className="text-lg text-fg mb-1">Your swaps</h2>
+        <p className="text-sm text-fg-dim mb-4">
+          Collateral balances update after each settled epoch.
+        </p>
+        {mySwaps.length === 0 && !loading ? (
+          <p className="text-fg-faint text-sm">No swaps for this wallet yet.</p>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-bg-raised border-b border-border">
+                  <th className="text-left px-4 py-3 text-xs text-fg-faint uppercase tracking-wider">Swap</th>
+                  <th className="text-left px-4 py-3 text-xs text-fg-faint uppercase tracking-wider">Role</th>
+                  <th className="text-right px-4 py-3 text-xs text-fg-faint uppercase tracking-wider">Notional</th>
+                  <th className="text-right px-4 py-3 text-xs text-fg-faint uppercase tracking-wider">Rate</th>
+                  <th className="text-right px-4 py-3 text-xs text-fg-faint uppercase tracking-wider">Progress</th>
+                  <th className="text-right px-4 py-3 text-xs text-fg-faint uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {mySwaps.map((swap) => {
+                  const nextEpoch = swap.startEpoch + swap.epochsSettled;
+                  const allSettled = swap.epochsSettled === swap.durationEpochs;
+                  return (
+                    <tr key={swap.id} className="hover:bg-bg-raised transition-colors">
+                      <td className="px-4 py-3.5 font-mono text-fg-faint">#{swap.id}</td>
+                      <td className="px-4 py-3.5">
+                        <Badge
+                          text={swap.role === "fixed" ? "Fixed" : "Variable"}
+                          tone={swap.role === "fixed" ? "accent" : "neutral"}
+                        />
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-mono text-fg">
+                        {formatUnits(swap.notional)}
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-mono text-fg">
+                        {swap.fixedRateBps.toString()} bps
+                      </td>
+                      <td className="px-4 py-3.5 text-right">
+                        <span className="text-fg-dim font-mono">
+                          {swap.epochsSettled.toString()}/{swap.durationEpochs.toString()}
+                        </span>
+                        <div className="w-16 h-1 bg-bg-raised-2 rounded-full mt-1.5 ml-auto">
+                          <div
+                            className="h-1 bg-accent rounded-full"
+                            style={{
+                              width: `${
+                                swap.durationEpochs > 0n
+                                  ? Number((swap.epochsSettled * 100n) / swap.durationEpochs)
+                                  : 0
+                              }%`,
+                            }}
+                          />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 text-right">
+                        <Badge
+                          text={SWAP_STATUS[swap.status]}
+                          tone={swap.status === 2 ? "neutral" : "positive"}
+                        />
+                      </td>
+                      <td className="px-4 py-3.5 text-right">
+                        {swap.status === 0 &&
+                          (!allSettled ? (
+                            <button
+                              onClick={() => settleEpoch(swap.id, nextEpoch)}
+                              disabled={busyAction === `settle-${swap.id}`}
+                              className="text-xs border border-border-strong rounded px-3 py-1.5 hover:border-accent hover:text-accent transition-colors disabled:opacity-40"
+                            >
+                              {busyAction === `settle-${swap.id}`
+                                ? "Settling…"
+                                : `Settle epoch ${nextEpoch.toString()}`}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => closeSwap(swap.id)}
+                              disabled={busyAction === `close-${swap.id}`}
+                              className="text-xs bg-positive/10 text-positive border border-positive/30 rounded px-3 py-1.5 hover:bg-positive/20 transition-colors disabled:opacity-40"
+                            >
+                              {busyAction === `close-${swap.id}` ? "Closing…" : "Close swap"}
+                            </button>
+                          ))}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
-        <div className="space-y-3">
-          {myOffers.map((offer) => (
-            <div key={offer.id} className="border border-border rounded p-5">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="text-sm text-fg">
-                  #{offer.id} — {offer.fixedRateBps.toString()} bps on{" "}
-                  {formatUnits(offer.notional)}, {offer.durationEpochs.toString()} epochs
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs px-2 py-1 rounded border border-border text-fg-faint">
-                    {OFFER_STATUS[offer.status]}
-                  </span>
-                  {offer.status === 0 && (
-                    <button
-                      onClick={() => cancelOffer(offer.id)}
-                      disabled={busyAction === `cancel-${offer.id}`}
-                      className="text-xs border border-border-strong rounded px-3 py-1.5 hover:border-negative hover:text-negative transition-colors disabled:opacity-40"
-                    >
-                      {busyAction === `cancel-${offer.id}` ? "Cancelling…" : "Cancel"}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
       </section>
 
       <section>
-        <h2 className="text-sm text-fg-faint uppercase tracking-wide mb-4">
-          Your swaps ({mySwaps.length})
-        </h2>
-        {mySwaps.length === 0 && !loading && (
-          <p className="text-fg-faint text-sm">No active swaps for this wallet.</p>
+        <h2 className="text-lg text-fg mb-1">Your open offers</h2>
+        <p className="text-sm text-fg-dim mb-4">
+          Offers waiting for a variable party to accept. Cancel any of
+          these to reclaim your collateral immediately.
+        </p>
+        {myOffers.length === 0 && !loading ? (
+          <p className="text-fg-faint text-sm">No offers posted from this wallet yet.</p>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-bg-raised border-b border-border">
+                  <th className="text-left px-4 py-3 text-xs text-fg-faint uppercase tracking-wider">Offer</th>
+                  <th className="text-right px-4 py-3 text-xs text-fg-faint uppercase tracking-wider">Notional</th>
+                  <th className="text-right px-4 py-3 text-xs text-fg-faint uppercase tracking-wider">Fixed rate</th>
+                  <th className="text-right px-4 py-3 text-xs text-fg-faint uppercase tracking-wider">Duration</th>
+                  <th className="text-right px-4 py-3 text-xs text-fg-faint uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {myOffers.map((offer) => (
+                  <tr key={offer.id} className="hover:bg-bg-raised transition-colors">
+                    <td className="px-4 py-3.5 font-mono text-fg-faint">#{offer.id}</td>
+                    <td className="px-4 py-3.5 text-right font-mono text-fg">
+                      {formatUnits(offer.notional)}
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
+                      <span className="bg-accent/10 text-accent font-mono text-xs px-2 py-0.5 rounded border border-accent/25">
+                        {offer.fixedRateBps.toString()} bps
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-right text-fg-dim">
+                      {offer.durationEpochs.toString()} epochs
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
+                      <Badge text={OFFER_STATUS[offer.status]} tone="neutral" />
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
+                      {offer.status === 0 && (
+                        <button
+                          onClick={() => cancelOffer(offer.id)}
+                          disabled={busyAction === `cancel-${offer.id}`}
+                          className="text-xs text-negative hover:underline disabled:opacity-40"
+                        >
+                          {busyAction === `cancel-${offer.id}` ? "Cancelling…" : "Cancel & reclaim"}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-        <div className="space-y-3">
-          {mySwaps.map((swap) => {
-            const nextEpoch = swap.startEpoch + swap.epochsSettled;
-            const allSettled = swap.epochsSettled === swap.durationEpochs;
-            return (
-              <div key={swap.id} className="border border-border rounded p-5">
-                <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
-                  <div className="text-sm text-fg">
-                    #{swap.id} — {swap.role === "fixed" ? "Fixed" : "Variable"} side,{" "}
-                    {swap.fixedRateBps.toString()} bps on {formatUnits(swap.notional)}
-                  </div>
-                  <span className="text-xs px-2 py-1 rounded border border-border text-fg-faint">
-                    {SWAP_STATUS[swap.status]}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-2 text-sm mb-4">
-                  <div>
-                    <div className="text-fg-faint text-xs mb-1">Epochs settled</div>
-                    <div className="text-fg">
-                      {swap.epochsSettled.toString()} / {swap.durationEpochs.toString()}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-fg-faint text-xs mb-1">Fixed collateral</div>
-                    <div className="text-fg">{formatUnits(swap.fixedCollateral)}</div>
-                  </div>
-                  <div>
-                    <div className="text-fg-faint text-xs mb-1">Variable collateral</div>
-                    <div className="text-fg">{formatUnits(swap.variableCollateral)}</div>
-                  </div>
-                </div>
-                {swap.status === 0 && (
-                  <div className="flex flex-wrap gap-3 pt-3 border-t border-border">
-                    {!allSettled ? (
-                      <button
-                        onClick={() => settleEpoch(swap.id, nextEpoch)}
-                        disabled={busyAction === `settle-${swap.id}`}
-                        className="text-xs border border-border-strong rounded px-3 py-1.5 hover:border-accent hover:text-accent transition-colors disabled:opacity-40"
-                      >
-                        {busyAction === `settle-${swap.id}`
-                          ? "Settling…"
-                          : `Settle epoch ${nextEpoch.toString()}`}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => closeSwap(swap.id)}
-                        disabled={busyAction === `close-${swap.id}`}
-                        className="text-xs border border-border-strong rounded px-3 py-1.5 hover:border-accent hover:text-accent transition-colors disabled:opacity-40"
-                      >
-                        {busyAction === `close-${swap.id}` ? "Closing…" : "Close swap"}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
       </section>
     </div>
   );
