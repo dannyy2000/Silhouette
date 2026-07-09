@@ -3,6 +3,7 @@ name = "silhouette"
 version = "0.1.0"
 edition = "2024_07"
 description = "Silhouette — a private interest rate swap for Starknet BTC-staking yield, built on STRK20."
+license = "MIT"
 
 [dependencies]
 starknet = ">=2.8.0"

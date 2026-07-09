@@ -736,6 +736,10 @@ deployer's address. No swaps have been posted against this deployment
 yet; it exists to prove the contracts declare, deploy, and wire together
 correctly on a live network, not as a market with real activity.
 
+Source code is also verified on [Voyager](https://sepolia.voyager.online/)
+for all three contracts, so the deployed bytecode is checked against this
+repo's actual source rather than trusted blindly.
+
 To redeploy from scratch:
 
 ```bash
