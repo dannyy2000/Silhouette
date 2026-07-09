@@ -82,6 +82,8 @@ pub trait ISwapCore<TContractState> {
     fn get_epoch_settlement(
         self: @TContractState, swap_id: u64, epoch: u64,
     ) -> Option<EpochSettlement>;
+    fn get_offer_count(self: @TContractState) -> u64;
+    fn get_swap_count(self: @TContractState) -> u64;
 }
 
 #[starknet::contract]
@@ -410,6 +412,20 @@ mod SwapCore {
             } else {
                 Option::None
             }
+        }
+
+        // Highest offer id assigned so far. Offer ids are sequential
+        // starting at 1, so a frontend can discover all offers by
+        // iterating 1..=get_offer_count() and calling get_offer per id —
+        // there's no on-chain enumeration/indexing beyond that.
+        fn get_offer_count(self: @ContractState) -> u64 {
+            self.offer_nonce.read()
+        }
+
+        // Highest swap id assigned so far. Same iteration pattern as
+        // get_offer_count.
+        fn get_swap_count(self: @ContractState) -> u64 {
+            self.swap_nonce.read()
         }
     }
 }

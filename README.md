@@ -633,6 +633,8 @@ the maintenance margin rule, and settles each epoch based on oracle data.
 | `get_offer` | Read-only | `offer_id: u64` | `Option<Offer>` | Full offer data or `None` |
 | `get_swap` | Read-only | `swap_id: u64` | `Option<Swap>` | Full swap data or `None` |
 | `get_epoch_settlement` | Read-only | `swap_id: u64, epoch: u64` | `Option<EpochSettlement>` | Settlement record for one epoch or `None` |
+| `get_offer_count` | Read-only | — | `u64` | Highest offer id assigned. Offer ids are sequential from 1, so a client can discover all offers by iterating `1..=get_offer_count()` and calling `get_offer` per id — there's no on-chain enumeration beyond that. |
+| `get_swap_count` | Read-only | — | `u64` | Highest swap id assigned, same iteration pattern as `get_offer_count` |
 
 **Errors:**
 
@@ -728,7 +730,7 @@ All three contracts are declared and deployed, in dependency order:
 |---|---|
 | `MockCollateralToken` | [`0x016e27eb35d9faf774600b3cedf2236743fea410c876a4a57d7cbc371c61a245`](https://sepolia.starkscan.co/contract/0x016e27eb35d9faf774600b3cedf2236743fea410c876a4a57d7cbc371c61a245) |
 | `StakingRateOracle` | [`0x043afc7db2618c4e5a7c886951c1e018bcd72324eb352f360c7bc174af400976`](https://sepolia.starkscan.co/contract/0x043afc7db2618c4e5a7c886951c1e018bcd72324eb352f360c7bc174af400976) |
-| `SwapCore` | [`0x04c85632a40e68f9383892cc75673e4a2a6de9a09367d4a776d45fcd6600fe49`](https://sepolia.starkscan.co/contract/0x04c85632a40e68f9383892cc75673e4a2a6de9a09367d4a776d45fcd6600fe49) |
+| `SwapCore` | [`0x05842b6f42dbd0f0ceb399795d60b4d4461fb8a48b75ed9161e2b37ea6f51451`](https://sepolia.starkscan.co/contract/0x05842b6f42dbd0f0ceb399795d60b4d4461fb8a48b75ed9161e2b37ea6f51451) |
 
 `StakingRateOracle`'s owner is the deploying account — verified by
 calling `get_owner()` against the address above, which returns the

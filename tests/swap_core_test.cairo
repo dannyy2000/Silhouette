@@ -57,6 +57,8 @@ fn test_full_lifecycle() {
     assert(swap.start_epoch == 1, 'wrong start epoch');
     assert(swap.status == 0, 'wrong status');
     assert(token.balance_of(swap_core.contract_address) == 12_500_000, 'wrong escrow');
+    assert(swap_core.get_offer_count() == 1, 'wrong offer count');
+    assert(swap_core.get_swap_count() == 1, 'wrong swap count');
 
     // Epoch 1: actual rate (95 bps) > fixed rate (80 bps) — variable wins.
     start_cheat_caller_address(oracle.contract_address, owner());
