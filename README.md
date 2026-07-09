@@ -740,9 +740,9 @@ All three contracts are declared and deployed, in dependency order:
 
 | Contract | Address |
 |---|---|
-| `MockCollateralToken` | [`0x016e27eb35d9faf774600b3cedf2236743fea410c876a4a57d7cbc371c61a245`](https://sepolia.starkscan.co/contract/0x016e27eb35d9faf774600b3cedf2236743fea410c876a4a57d7cbc371c61a245) |
-| `StakingRateOracle` | [`0x043afc7db2618c4e5a7c886951c1e018bcd72324eb352f360c7bc174af400976`](https://sepolia.starkscan.co/contract/0x043afc7db2618c4e5a7c886951c1e018bcd72324eb352f360c7bc174af400976) |
-| `SwapCore` | [`0x05842b6f42dbd0f0ceb399795d60b4d4461fb8a48b75ed9161e2b37ea6f51451`](https://sepolia.starkscan.co/contract/0x05842b6f42dbd0f0ceb399795d60b4d4461fb8a48b75ed9161e2b37ea6f51451) |
+| `MockCollateralToken` | [`0x016e27eb35d9faf774600b3cedf2236743fea410c876a4a57d7cbc371c61a245`](https://sepolia.voyager.online/contract/0x016e27eb35d9faf774600b3cedf2236743fea410c876a4a57d7cbc371c61a245) |
+| `StakingRateOracle` | [`0x043afc7db2618c4e5a7c886951c1e018bcd72324eb352f360c7bc174af400976`](https://sepolia.voyager.online/contract/0x043afc7db2618c4e5a7c886951c1e018bcd72324eb352f360c7bc174af400976) |
+| `SwapCore` | [`0x05842b6f42dbd0f0ceb399795d60b4d4461fb8a48b75ed9161e2b37ea6f51451`](https://sepolia.voyager.online/contract/0x05842b6f42dbd0f0ceb399795d60b4d4461fb8a48b75ed9161e2b37ea6f51451) |
 
 `StakingRateOracle`'s owner is the deploying account — verified by
 calling `get_owner()` against the address above, which returns the
