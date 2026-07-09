@@ -82,7 +82,12 @@ export default function Home() {
               interest rate swap: one party locks in a fixed rate, a
               counterparty takes the floating side, and a smart contract
               settles the difference automatically — every epoch, no
-              manual claiming.
+              manual claiming.{" "}
+              <span className="text-fg">
+                Built on Starknet&apos;s STRK20, so the position — who&apos;s
+                in it, how large it is, which side — stays visible only to
+                the two counterparties, not the whole market.
+              </span>
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
