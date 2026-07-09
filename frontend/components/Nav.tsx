@@ -17,7 +17,7 @@ function shorten(address: string) {
 
 function WalletControl() {
   const { address, status } = useAccount();
-  const { connect, connectors } = useConnect();
+  const { connect, connectors, error, isPending } = useConnect();
   const { disconnect } = useDisconnect();
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -46,10 +46,10 @@ function WalletControl() {
         onClick={() => setPickerOpen((v) => !v)}
         className="border border-border-strong text-fg text-sm px-4 py-2 rounded hover:border-accent hover:text-accent transition-colors"
       >
-        Connect Wallet
+        {isPending ? "Connecting…" : "Connect Wallet"}
       </button>
       {pickerOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-bg-raised border border-border rounded shadow-lg py-1 z-40">
+        <div className="absolute right-0 mt-2 w-64 bg-bg-raised border border-border rounded shadow-lg py-1 z-40">
           {connectors.map((connector) => (
             <button
               key={connector.id}
@@ -67,6 +67,15 @@ function WalletControl() {
               No Starknet wallet detected
             </div>
           )}
+        </div>
+      )}
+      {error && (
+        <div className="absolute right-0 mt-2 w-72 bg-bg-raised border border-negative/30 rounded shadow-lg p-3 z-40">
+          <p className="text-xs text-negative mb-1">Couldn&apos;t connect</p>
+          <p className="text-xs text-fg-faint leading-relaxed">
+            Make sure your wallet is set to <strong>Starknet Sepolia</strong>{" "}
+            (not Mainnet) before connecting, then try again.
+          </p>
         </div>
       )}
     </div>
@@ -148,7 +157,7 @@ export default function Nav() {
 
 function MobileWallet() {
   const { address, status } = useAccount();
-  const { connect, connectors } = useConnect();
+  const { connect, connectors, error, isPending } = useConnect();
   const { disconnect } = useDisconnect();
 
   if (status === "connected" && address) {
@@ -173,11 +182,18 @@ function MobileWallet() {
         <button
           key={connector.id}
           onClick={() => connect({ connector })}
-          className="w-full text-left text-sm text-fg-dim py-2"
+          disabled={isPending}
+          className="w-full text-left text-sm text-fg-dim py-2 disabled:opacity-40"
         >
-          Connect {connector.name}
+          {isPending ? "Connecting…" : `Connect ${connector.name}`}
         </button>
       ))}
+      {error && (
+        <p className="text-xs text-negative leading-relaxed pb-2">
+          Couldn&apos;t connect — make sure your wallet is set to Starknet
+          Sepolia, not Mainnet, then try again.
+        </p>
+      )}
     </div>
   );
 }
