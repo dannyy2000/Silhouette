@@ -22,7 +22,7 @@ const faqs = [
   },
   {
     q: "What is an epoch?",
-    a: "One BTC-staking epoch on Starknet. A swap with a duration of 6 epochs runs for 6 completed epochs of the oracle posting a rate and settle_epoch being called.",
+    a: "Starknet's own staking epoch — about 1 hour on mainnet, ~20 minutes on Sepolia (per docs.starknet.io), much shorter than a Stacks PoX cycle. Right now the oracle tracks epochs as a manually-incremented counter, not wall-clock time directly, so a swap's actual duration depends on how often the oracle owner submits rates, not a hardcoded timer. A swap with a duration of 6 epochs runs for 6 completed epochs of the oracle posting a rate and settle_epoch being called.",
   },
   {
     q: "Can I cancel after posting?",

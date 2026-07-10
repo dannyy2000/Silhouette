@@ -101,6 +101,19 @@ native privacy (STRK20). Both went live within months of each other,
 which is what makes this specific product possible now and not earlier —
 see [Why Starknet](#why-starknet).
 
+**How long is an epoch, actually?** Starknet's own staking epoch is
+short — about 1,132 blocks / ~1 hour on mainnet, and ~231 blocks / ~20
+minutes on Sepolia, [per Starknet's own
+docs](https://docs.starknet.io/architecture/staking/). That's much
+shorter than a Stacks PoX cycle (~2 weeks). One caveat specific to this
+repo: `staking_rate_oracle.cairo`'s Phase 1 tracks `epoch` as a
+manually-incremented counter the oracle owner controls, not wall-clock
+time read from Starknet's staking contract directly — so a swap's real
+elapsed duration today depends on how often the oracle owner submits
+rates, not a fixed timer. Phase 2 (a direct on-chain read of Starknet's
+staking contract, see [Known Gaps](#known-gaps)) would tie epochs to
+that real ~1-hour cadence automatically.
+
 ---
 
 ## The Problem

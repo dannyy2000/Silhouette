@@ -7,6 +7,10 @@ const faqs = [
     a: "Starknet runs a dual-token consensus model: STRK stake is 75% of the network's security weight, BTC stake is the other 25%. BTC holders stake without giving up custody and receive a share of STRK emissions every epoch. It's a trustless L2 staking mechanism, not a synthetic reward.",
   },
   {
+    q: "How long is an epoch?",
+    a: "Starknet's own staking epoch is about 1 hour on mainnet, ~20 minutes on Sepolia (per docs.starknet.io) — much shorter than, say, a Stacks PoX cycle (~2 weeks). Right now Silhouette's oracle tracks epochs as a manually-incremented counter, not wall-clock time directly, so an actual swap's real duration depends on how often the oracle owner submits rates. Phase 2 (a direct on-chain read of Starknet's staking contract) would tie it to the real cadence automatically.",
+  },
+  {
     q: "Why does the rate keep changing?",
     a: "BTC stakers as a group get a fixed 25% share of STRK emissions, but that pool is split across however much BTC is staked network-wide. Stake more BTC and the per-staker rate drops; stake less and it rises. Nobody controls this or can predict it precisely, epoch to epoch.",
   },
